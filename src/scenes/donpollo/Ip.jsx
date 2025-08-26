@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState ,useEffect,useContext} from 'react';
 import axios from "axios";
-import Papa from "papaparse";
+//import Papa from "papaparse";
 import Swal from "sweetalert2"; 
 
 import Header from "../../components/Header";
@@ -60,7 +60,7 @@ const Ip= () => {
   
     const [subTitle, setSubTitle] = useState('');
   
-    const [isRefetching, setIsRefetching] = useState(false);
+   // const [isRefetching, setIsRefetching] = useState(false);
   
     const [isLoading, setIsLoading] = useState(false);
    ///////////////
@@ -110,30 +110,30 @@ const Ip= () => {
     const [openSnack, setOpenSnack] = useState(false);
     const [message, setMessage] = useState(false);
 
-    const filterTableData = (data, columnFilters) => {
-      return data.filter(row => {
-        return columnFilters.every(({ id, value }) => {
-          const filterValue = value.toString().toLowerCase();
+    // const filterTableData = (data, columnFilters) => {
+    //   return data.filter(row => {
+    //     return columnFilters.every(({ id, value }) => {
+    //       const filterValue = value.toString().toLowerCase();
 
-          if (id === 'lugar.descripcion') {
-            // filtro en campo anidado
-            return row.lugar?.descripcion?.toLowerCase().includes(filterValue);
-          } else {
-            // filtro en campo plano
-            const cellValue = (row[id] ?? '').toString().toLowerCase();
-            return cellValue.includes(filterValue);
-          }
-        });
-      });
-    };    
+    //       if (id === 'lugar.descripcion') {
+    //         // filtro en campo anidado
+    //         return row.lugar?.descripcion?.toLowerCase().includes(filterValue);
+    //       } else {
+    //         // filtro en campo plano
+    //         const cellValue = (row[id] ?? '').toString().toLowerCase();
+    //         return cellValue.includes(filterValue);
+    //       }
+    //     });
+    //   });
+    // };    
 
-    const filteredData = useMemo(() => filterTableData(tableData, columnFilters), [tableData, columnFilters]);
+  //  const filteredData = useMemo(() => filterTableData(tableData, columnFilters), [tableData, columnFilters]);
 
     const handleCreateNewRow = (values) => {
     
   
           setIsLoading(true);
-          setIsRefetching(true);
+         // setIsRefetching(true);
           
 
           const idlug=lugarData.find(element=>element.descripcion===values.lugar);
@@ -173,7 +173,7 @@ const Ip= () => {
                 setOpenSnack(true);
 
                 setIsLoading(false);
-                setIsRefetching(false);
+                //setIsRefetching(false);
               
             }).catch((error) => {
 
@@ -181,7 +181,7 @@ const Ip= () => {
               setErrorPrueba(true);
               setErrorText(JSON.stringify(error));
               setIsLoading(false);
-              setIsRefetching(false);
+             // setIsRefetching(false);
 
 
           });
@@ -197,7 +197,7 @@ const Ip= () => {
         console.log("modifica=====ok los VALUES ", values);
            
         setIsLoading(true);
-        setIsRefetching(true);
+        //setIsRefetching(true);
       
 
 
@@ -229,7 +229,7 @@ const Ip= () => {
             console.log(response);
 
             setIsLoading(false);
-            setIsRefetching(false);
+            //setIsRefetching(false);
             setMessage(`Modificado ${values.id}`);
             setOpenSnack(true);
  
@@ -267,7 +267,7 @@ const Ip= () => {
 
           if (response.isConfirmed){
             setIsLoading(true);
-            setIsRefetching(true);
+            //setIsRefetching(true);
     
 
             
@@ -283,7 +283,7 @@ const Ip= () => {
                 setTableData([...tableData]);
     
                 setIsLoading(false);
-                setIsRefetching(false);
+                //setIsRefetching(false);
     
                 setMessage(`Eliminado ${row.getValue('id')}`);
                 setOpenSnack(true);
@@ -291,7 +291,7 @@ const Ip= () => {
             })
             .catch((error) => {
                 setIsLoading(false);
-                setIsRefetching(false);
+               // setIsRefetching(false);
     
                 console.log(error);
                 setErrorPrueba(true);
@@ -464,7 +464,7 @@ const Ip= () => {
       setLugarData(data.data);
 
       setIsLoading(false);
-      setIsRefetching(false);
+     // setIsRefetching(false);
 
     })
     .catch((error) => {
@@ -477,11 +477,11 @@ const Ip= () => {
   };  
 
 
-  function handleColumnDrag(event)  {
-    let columnOrder = [];
+  // function handleColumnDrag(event)  {
+  //   let columnOrder = [];
 
 
-  };
+  // };
 
 const buildFilterQuery = (searchTerm) => {
   if (!searchTerm) return '';
@@ -496,18 +496,43 @@ const buildFilterQuery = (searchTerm) => {
       `&filters[$or][4][detalle][$containsi]=${encoded}`
     );
   };
-  const buildColumnFiltersQuery = (filters) => {
-    if (!filters.length) return '';
+  // const buildColumnFiltersQuery = (filters) => {
+  //   if (!filters.length) return '';
 
-    return filters
-      .map((filter, index) => {
-        const key = encodeURIComponent(filter.id);
-        const value = encodeURIComponent(filter.value);
-        return `&filters[$and][${index}][${key}][$containsi]=${value}`;
-      })
-      .join('');
+  //   return filters
+  //     .map((filter, index) => {
+  //       const key = encodeURIComponent(filter.id);
+  //       const value = encodeURIComponent(filter.value);
+  //       return `&filters[$and][${index}][${key}][$containsi]=${value}`;
+  //     })
+  //     .join('');
+  // };
+
+  const buildColumnFiltersQuery = (columnFilters) => {
+    if (!columnFilters || columnFilters.length === 0) return "";
+
+    return (
+      "&" +
+      columnFilters
+        .map((filter) => {
+          let field = filter.id;
+
+          // soporta relaciones anidadas: lugar.descripcion -> lugar][descripcion
+          if (field.includes(".")) {
+            field = field.split(".").join("][");
+          }
+
+          const value = encodeURIComponent(filter.value);
+
+          // si es número -> $eq, si no -> $contains
+          if (!isNaN(filter.value)) {
+            return `filters[${field}][$eq]=${value}`;
+          }
+          return `filters[${field}][$contains]=${value}`;
+        })
+        .join("&")
+    );
   };
-
 
 
 
@@ -518,61 +543,102 @@ const buildFilterQuery = (searchTerm) => {
    setTitle(inicialIp.title);
    setSubTitle(inicialIp.subtitle);
    setIsLoading(true);
-   setIsRefetching(true);
+   //setIsRefetching(true);
 
 
    const urlapi=`${URL_BASE}${API_SEL}`
    console.log(urlapi);
-
-   const cargaStrapi=async()=>{
+      const cargaStrapi = async () => {
         const { pageIndex, pageSize } = pagination;
         const sort = sorting[0]
-          ? `${sorting[0].id}:${sorting[0].desc ? 'desc' : 'asc'}`
-          : '';
+          ? `${sorting[0].id}:${sorting[0].desc ? "desc" : "asc"}`
+          : "";
 
-        const filterQuery = buildFilterQuery(globalFilter);
-        
+        const filterQuery = buildFilterQuery(globalFilter); // filtro global
+        const columnFilterQuery = buildColumnFiltersQuery(columnFilters); // filtro por columna
 
         const urlapi =
-        `${URL_BASE}${API_SEL}?` +
-        `pagination[page]=${pageIndex + 1}` +
-        `&pagination[pageSize]=${pageSize}` +
-        `${sort ? `&sort=${encodeURIComponent(sort)}` : ''}` +
-        `&populate=lugar` + // trae relación lugar para mostrar pero no filtrar en backend
-        `&fields[0]=id&fields[1]=nombre&fields[2]=equipo&fields[3]=ip&fields[4]=detalle` +
-        `${filterQuery || '' }`
+          `${URL_BASE}${API_SEL}?` +
+          `pagination[page]=${pageIndex + 1}` +
+          `&pagination[pageSize]=${pageSize}` +
+          `${sort ? `&sort=${encodeURIComponent(sort)}` : ""}` +
+          `&populate=lugar` +
+          `&fields[0]=id&fields[1]=nombre&fields[2]=equipo&fields[3]=ip&fields[4]=detalle` +
+          `${filterQuery || ""}` +
+          `${columnFilterQuery || ""}`;
+
+        console.log("👉 URL Final:", urlapi);
 
         await axios
           .get(urlapi, {
             headers: { Authorization: `Bearer ${token}` },
           })
-       .then(({ data }) => {
+          .then(({ data }) => {
+            setTableData(data.data);
+            setTotal(data.meta.pagination.total);
+            setIsLoading(false);
+           // setIsRefetching(false);
 
-        setTableData(data.data);
-        setTotal(data.meta.pagination.total);
-        setIsLoading(false);
-        setIsRefetching(false);
+            if (isOtrasTab) {
+              cargaLugar();
+              setIsOtrasTab(false);
+            }
+          })
+          .catch((error) => {
+            console.log("error");
+            setErrorPrueba(true);
+            setErrorText(JSON.stringify(error));
+          });
+      };
 
-        if (isOtrasTab){
-            cargaLugar();
-            setIsOtrasTab(false);
-        }
+      cargaStrapi();
+//    const cargaStrapi=async()=>{
+//         const { pageIndex, pageSize } = pagination;
+//         const sort = sorting[0]
+//           ? `${sorting[0].id}:${sorting[0].desc ? 'desc' : 'asc'}`
+//           : '';
+
+//         const filterQuery = buildFilterQuery(globalFilter);
         
 
-       })
-       .catch((error) => {
-         console.log("error")
-         setErrorPrueba(true)
-         setErrorText(JSON.stringify(error))
+//         const urlapi =
+//         `${URL_BASE}${API_SEL}?` +
+//         `pagination[page]=${pageIndex + 1}` +
+//         `&pagination[pageSize]=${pageSize}` +
+//         `${sort ? `&sort=${encodeURIComponent(sort)}` : ''}` +
+//         `&populate=lugar` + // trae relación lugar para mostrar pero no filtrar en backend
+//         `&fields[0]=id&fields[1]=nombre&fields[2]=equipo&fields[3]=ip&fields[4]=detalle` +
+//         `${filterQuery || '' }`
+
+//         await axios
+//           .get(urlapi, {
+//             headers: { Authorization: `Bearer ${token}` },
+//           })
+//        .then(({ data }) => {
+
+//         setTableData(data.data);
+//         setTotal(data.meta.pagination.total);
+//         setIsLoading(false);
+//         setIsRefetching(false);
+
+//         if (isOtrasTab){
+//             cargaLugar();
+//             setIsOtrasTab(false);
+//         }
+        
+
+//        })
+//        .catch((error) => {
+//          console.log("error")
+//          setErrorPrueba(true)
+//          setErrorText(JSON.stringify(error))
        
-       });
+//        });
 
-  }; 
-
-   cargaStrapi();
-
+//   }; 
   
  },[pagination, sorting, globalFilter,columnFilters] );  
+ 
   return (
     <>
  
@@ -619,37 +685,47 @@ const buildFilterQuery = (searchTerm) => {
           },
         }}
 
+        // columns={columns}
+        // data={filteredData}
+        // manualPagination
+        // manualSorting
+        // onPaginationChange={setPagination}
+        // onSortingChange={setSorting}
+        // onColumnFiltersChange={setColumnFilters}  // Actualiza filtros por columna
+        // enableColumnFilters
+        // rowCount={total}
+        // manualFiltering
+        // enableRowSelection={false}
+        // muiTablePaginationProps={{
+        //   rowsPerPageOptions: [10, 25, 50],
+        //   showFirstButton: true,
+        //   showLastButton: true,
+        // }}
+        // state={{
+        //   columnVisibility:{imagen:false},
+        //   isLoading,
+        //   showProgressBars: isRefetching,
+        //   pagination, 
+        //   sorting,
+        //   columnFilters,
+      
+        // }}     
+
+        // manualGlobalFilter
+        // onGlobalFilterChange={setGlobalFilter}
         columns={columns}
-        data={filteredData}
+        data={tableData}
+        manualFiltering
         manualPagination
         manualSorting
-        onPaginationChange={setPagination}
-        onSortingChange={setSorting}
-        onColumnFiltersChange={setColumnFilters}  // Actualiza filtros por columna
-        enableColumnFilters
         rowCount={total}
-        manualFiltering
-        enableRowSelection={false}
-        muiTablePaginationProps={{
-          rowsPerPageOptions: [10, 25, 50],
-          showFirstButton: true,
-          showLastButton: true,
-        }}
-        state={{
-          columnVisibility:{imagen:false},
-          isLoading,
-          showProgressBars: isRefetching,
-          pagination, 
-          sorting,
-          columnFilters,
-      
-        }}     
-
-        manualGlobalFilter
+        state={{ columnFilters, globalFilter, pagination, sorting, isLoading }}
+        onColumnFiltersChange={setColumnFilters}
         onGlobalFilterChange={setGlobalFilter}
-   
+        onPaginationChange={setPagination}
+        onSortingChange={setSorting}  
 
-        onDraggingColumnChange={handleColumnDrag}
+      //  onDraggingColumnChange={handleColumnDrag}
         localization={MRT_Localization_ES}
         enableTopToolbar={true} //hide top toolbar
         enableBottomToolbar={true} //hide bottom toolbar
