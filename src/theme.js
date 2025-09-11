@@ -199,7 +199,13 @@ export const ColorModeContext = createContext({
 });
 
 export const useMode = () => {
-  const [mode, setMode] = useState("dark");
+  //const [mode, setMode] = useState("dark");
+  //const [mode, setMode] = useState("light");
+// Detectamos si es mobile en el primer render
+  const isMobileInitial = typeof window !== "undefined" ? window.innerWidth <= 600 : false;
+
+  // Si es mobile, forzamos light; si no, podemos usar light por defecto
+  const [mode, setMode] = useState(isMobileInitial ? "light" : "dark"); 
 
   const colorMode = useMemo(
     () => ({

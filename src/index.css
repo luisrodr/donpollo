@@ -33,3 +33,7 @@ body,
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+/* Forzar SweetAlert2 sobre cualquier modal de MUI */
+.swal2-container {
+  z-index: 20000 !important;
+}

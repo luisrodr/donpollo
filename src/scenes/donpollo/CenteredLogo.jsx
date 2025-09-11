@@ -1,7 +1,10 @@
 import React from "react";
-import { Container, Box } from "@mui/material";
+import { Container, Box, useTheme, useMediaQuery } from "@mui/material";
 
 const CenteredLogo = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // true si <600px
+
   return (
     <Container
       maxWidth="md"
@@ -10,14 +13,17 @@ const CenteredLogo = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
+        padding: isMobile ? "10px" : "20px",
       }}
     >
       <Box
         component="img"
-        
         src={`../../logodonpollo.png`}
         alt="Logo"
-        //sx={{ width: 150, height: 150 }}
+        sx={{
+          width: isMobile ? 120 : 250, // más chico en mobile
+          height: "auto",
+        }}
       />
     </Container>
   );

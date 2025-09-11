@@ -447,7 +447,7 @@ const Facturas= () => {
         renderRowActions={({ row, table }) => (
           <Box sx={{ display: 'flex', gap: '1rem' }}>
             <Tooltip arrow placement="left" title="Imagen">
-              <IconButton onClick={() =>{
+              {/* <IconButton onClick={() =>{
                 //lo abre directo en el navegador*****************
                 console.log(row.original.imagen);
                 const link = document.createElement('a');
@@ -458,7 +458,21 @@ const Facturas= () => {
                 document.body.removeChild(link);
               }}> 
                 <ViewAgenda />
-              </IconButton>
+              </IconButton> */}
+                <IconButton
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = `${URL_IMG}${row.original.imagen}`;
+                    link.setAttribute("download", row.original.imagen); // 👈 fuerza descarga
+                    link.setAttribute("target", "_self"); // 👈 evita nueva pestaña
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                >
+                  <ViewAgenda />
+                </IconButton>
+              
             </Tooltip>
 
           </Box>
