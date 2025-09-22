@@ -61,7 +61,7 @@ const Ip = () => {
 
   // diálogo selección de red
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedOption, setSelectedOption] = useState("");
+  const [selectedOptionRed, setSelectedOptionRed] = useState("");
 
   // diálogo selección de IP disponible
   const [openDialogIps, setOpenDialogIps] = useState(false);
@@ -73,7 +73,10 @@ const Ip = () => {
   //   { value: "192.168.50.", label: "192.168.50" },
   // ];
 
-  const handleClickOpen = () => setOpenDialog(true);
+  const handleClickOpen = () => {
+    setSelectedOptionRed("");
+    setOpenDialog(true);
+  };
 
   const handleClose = () => {
     setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: 10 })); 
@@ -85,8 +88,8 @@ const Ip = () => {
   const obtenerIpsDisponibles = () => {
     let disponibles = [];
     for (let i = 2; i <= 254; i++) {
-      const ip = selectedOption + i;
-      const existe = tableData.some((row) => row.ip === ip);
+      const ip = selectedOptionRed + i;
+      const existe = tableData.some((row) => row.ip.trim() === ip);
       if (!existe) disponibles.push(ip);
     }
     return disponibles;
@@ -95,7 +98,7 @@ const Ip = () => {
   const handleSave = () => {
     setGlobalFilter("");
     setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: 10 }));
-    if (selectedOption) {
+    if (selectedOptionRed) {
       const libres = obtenerIpsDisponibles();
       if (libres.length > 0) {
         setIpsDisponibles(libres);
@@ -288,6 +291,34 @@ const Ip = () => {
     doc.save('table.pdf');
   };
 
+
+  const csvOptionsLibres = {
+    fieldSeparator: ',',
+    quoteStrings: '"',
+    decimalSeparator: '.',
+    showLabels: true,
+    useBom: true,
+    useKeysAsHeaders: false,
+    headers: ["ip"],
+  };
+  const csvExporterLibre = new ExportToCsv(csvOptionsLibres);
+
+const handleExportDataLibre = () => {
+  let dataCsvLibre = ipsDisponibles.map(ip => ({ ip })); // forma más corta
+
+//  console.log("Datos para CSV:", dataCsvLibre);
+
+  csvExporterLibre.generateCsv(dataCsvLibre);
+};
+
+
+const handleCancelDataLibre = () => {
+    setGlobalFilter("");
+  setOpenDialogIps(false);
+  setOpenDialog(false);
+};
+
+    
   return (
     <>
       {error && <Alert onClose={() => setError(null)} severity="error">{error}</Alert>}
@@ -384,14 +415,14 @@ const Ip = () => {
         <DialogTitle>Selecciona una red</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
-            <InputLabel>Opciones</InputLabel>
+            <InputLabel>Opciones de red</InputLabel>
             <Select
-              value={selectedOption}
+              value={selectedOptionRed}
               onChange={(e) => {
                 setDisabledGuardar(true); 
                 setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: 255 }));
                 setGlobalFilter(e.target.value);
-                setSelectedOption(e.target.value);
+                setSelectedOptionRed(e.target.value);
               }}
               label="Opciones"
             >
@@ -411,7 +442,8 @@ const Ip = () => {
 
       {/* Diálogo para elegir IP libre */}
       <Dialog open={openDialogIps} onClose={() => setOpenDialogIps(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Selecciona una IP disponible</DialogTitle>
+              
+        <DialogTitle>Selecciona una IP disponible {selectedOptionRed}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
             <InputLabel>IPs libres</InputLabel>
@@ -426,7 +458,8 @@ const Ip = () => {
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialogIps(false)} color="error">Cancelar</Button>
+          <Button onClick={() => handleExportDataLibre()} color="error">Exportar</Button>
+          <Button onClick={() => handleCancelDataLibre()} color="error">Cancelar</Button>
           <Button disabled={!ipSeleccionada} onClick={confirmarIp} color="success" variant="contained">
             Aceptar
            </Button>
