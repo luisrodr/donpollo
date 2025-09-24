@@ -2,15 +2,14 @@
 
 
 
-import React, { useCallback, useMemo, useState, useEffect, useContext } from 'react';
+import  { useCallback, useMemo, useState, useEffect, useContext } from 'react';
 import axios from "axios";
 import Swal from "sweetalert2"; 
 import MaterialReactTable from 'material-react-table';
 import { MRT_Localization_ES } from 'material-react-table/locales/es';
 import { 
   Alert, Box, Button, IconButton, Tooltip, useTheme, Snackbar,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  FormControl, InputLabel, Select, MenuItem, Typography, useMediaQuery
+ useMediaQuery
 } from '@mui/material';
 import { Delete, Edit, Add } from '@mui/icons-material';
 import CloudDownload from "@mui/icons-material/CloudDownload";
@@ -21,7 +20,9 @@ import { ExportToCsv } from 'export-to-csv';
 import { AuthContext } from "../../mycontext";
 import Header from "../../components/Header";
 import { ModalIp } from './modal/ModalIp';
+//import { DialogRedIp } from "./modal/DialogRedIp";
 import { inicialIp } from '../../data/makeDataCrud';
+
 
 const URL_BASE = process.env.REACT_APP_URL_BASE;
 const API_SEL_RED = process.env.REACT_APP_API_SEL_RED;
@@ -36,7 +37,7 @@ const Ip = () => {
   const { user } = useContext(AuthContext);
   const { token } = user;
   const isMobile = useMediaQuery('(max-width:600px)');
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  //const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [tableData, setTableData] = useState([]);
   const [lugarData, setLugarData] = useState([]);
@@ -61,60 +62,16 @@ const Ip = () => {
 
   // diálogo selección de red
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedOptionRed, setSelectedOptionRed] = useState("");
 
-  // diálogo selección de IP disponible
-  const [openDialogIps, setOpenDialogIps] = useState(false);
-  const [ipsDisponibles, setIpsDisponibles] = useState([]);
-  const [ipSeleccionada, setIpSeleccionada] = useState("");
-
-  // const opciones = [
-  //   { value: "192.68.32.", label: "192.68.32" },
-  //   { value: "192.168.50.", label: "192.168.50" },
-  // ];
 
   const handleClickOpen = () => {
-    setSelectedOptionRed("");
-    setOpenDialog(true);
+    setInicial(inicialIp);
+    setDisabledGuardar(true);
+
+    setCreateModalOpen(true);
   };
 
-  const handleClose = () => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: 10 })); 
-    setOpenDialog(false);
-    setGlobalFilter("");
-  };
 
-  // 🔹 Buscar TODAS las IPs disponibles
-  const obtenerIpsDisponibles = () => {
-    let disponibles = [];
-    for (let i = 2; i <= 254; i++) {
-      const ip = selectedOptionRed + i;
-      const existe = tableData.some((row) => row.ip.trim() === ip);
-      if (!existe) disponibles.push(ip);
-    }
-    return disponibles;
-  };
-
-  const handleSave = () => {
-    setGlobalFilter("");
-    setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: 10 }));
-    if (selectedOptionRed) {
-      const libres = obtenerIpsDisponibles();
-      if (libres.length > 0) {
-        setIpsDisponibles(libres);
-        setIpSeleccionada("");
-        setOpenDialogIps(true);
-      } else {
-        Swal.fire("Error", "No hay IPs disponibles en esta red", "error");
-      }
-    }
-  };
-
-  const confirmarIp = () => {
-    inicialIp.ip = ipSeleccionada || inicialIp.ip;
-    setOpenDialogIps(false);
-    levantaModal();
-  };
 
   const levantaModal = () => {
     setOpenDialog(false);
@@ -192,7 +149,12 @@ const Ip = () => {
     }
   }, [pagination, sorting, globalFilter, columnFilters, token, lugarData.length, fetchLugar]);
 
-  useEffect(() => { fetchData(); fetchRed();}, [fetchData]);
+  useEffect(() => { 
+
+    fetchData();
+    fetchRed();
+
+   }, [fetchData,fetchRed]);
 
   const handleCreateOrEdit = async (values, isEdit = false) => {
     setIsLoading(true);
@@ -206,6 +168,7 @@ const Ip = () => {
         lugar: lugarSeleccionado.id
       };
       if (isEdit) {
+        console.log("payload: ",payload)
         await axios.put(`${URL_BASE}${API_UPD}${rowData.getValue('id')}`, { data: payload }, { headers: { Authorization: `Bearer ${token}` } });
         const newData = [...tableData];
         newData[rowData.index] = { ...values, lugar: lugarSeleccionado };
@@ -292,31 +255,6 @@ const Ip = () => {
   };
 
 
-  const csvOptionsLibres = {
-    fieldSeparator: ',',
-    quoteStrings: '"',
-    decimalSeparator: '.',
-    showLabels: true,
-    useBom: true,
-    useKeysAsHeaders: false,
-    headers: ["ip"],
-  };
-  const csvExporterLibre = new ExportToCsv(csvOptionsLibres);
-
-const handleExportDataLibre = () => {
-  let dataCsvLibre = ipsDisponibles.map(ip => ({ ip })); // forma más corta
-
-//  console.log("Datos para CSV:", dataCsvLibre);
-
-  csvExporterLibre.generateCsv(dataCsvLibre);
-};
-
-
-const handleCancelDataLibre = () => {
-    setGlobalFilter("");
-  setOpenDialogIps(false);
-  setOpenDialog(false);
-};
 
     
   return (
@@ -348,11 +286,7 @@ const handleCancelDataLibre = () => {
           showFirstButton: true,
           showLastButton: true,
         }}
-        // initialState={{
-        //   density: 'compact',
-        //   //density: isMobile ? 'compact' : 'comfortable',
-        //   isFullScreen: isMobile,
-        // }}
+
         initialState={{
                 density: "compact",
                 isFullScreen: isMobile,
@@ -401,70 +335,25 @@ const handleCancelDataLibre = () => {
       <ModalIp
         columns={columns}
         open={createModalOpen}
+
         onClose={() => setCreateModalOpen(false)}
         onSubmit={(values) => handleCreateOrEdit(values, false)}
         onEdit={(values) => handleCreateOrEdit(values, true)}
         lugarData={lugarData}
+        tableData={tableData}
         inicial={inicial}
         titulomod={titulomod}
         deshabilitado={deshabilitado}
+        setPagination={setPagination}
+        setGlobalFilter={setGlobalFilter}
+        disabledGuardar={disabledGuardar}
+        setDisabledGuardar={setDisabledGuardar}
+        openDialog={openDialog}
+        setOpenDialog={setOpenDialog}
+        redData={redData}
+
       />
 
-      {/* Diálogo para elegir red */}
-      <Dialog open={openDialog} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={fullScreen}>
-        <DialogTitle>Selecciona una red</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Opciones de red</InputLabel>
-            <Select
-              value={selectedOptionRed}
-              onChange={(e) => {
-                setDisabledGuardar(true); 
-                setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: 255 }));
-                setGlobalFilter(e.target.value);
-                setSelectedOptionRed(e.target.value);
-              }}
-              label="Opciones"
-            >
-              {redData.map((op, index) => (
-                <MenuItem key={index} value={op.red}>{op.red}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="error">Cancelar</Button>
-          <Button disabled={disabledGuardar} onClick={handleSave} color="success" variant="contained">
-            {disabledGuardar ? "Procesando..." : "Aceptar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Diálogo para elegir IP libre */}
-      <Dialog open={openDialogIps} onClose={() => setOpenDialogIps(false)} fullWidth maxWidth="sm">
-              
-        <DialogTitle>Selecciona una IP disponible {selectedOptionRed}</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth margin="normal">
-            <InputLabel>IPs libres</InputLabel>
-            <Select
-              value={ipSeleccionada}
-              onChange={(e) => setIpSeleccionada(e.target.value)}
-            >
-              {ipsDisponibles.map((ip, index) => (
-                <MenuItem key={index} value={ip}>{ip}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handleExportDataLibre()} color="error">Exportar</Button>
-          <Button onClick={() => handleCancelDataLibre()} color="error">Cancelar</Button>
-          <Button disabled={!ipSeleccionada} onClick={confirmarIp} color="success" variant="contained">
-            Aceptar
-           </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };

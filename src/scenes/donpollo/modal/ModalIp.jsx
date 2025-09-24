@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { isIPv4 } from 'is-ip';
 import { onlyNumbers } from '../helpers/funcYup';
+import { DialogRedIp } from "./DialogRedIp";
 
 yup.addMethod(yup.string, "solonum", function (errorMessage) {
   return this.test(`test-codigo solo num`, errorMessage, function (value) {
@@ -32,6 +33,7 @@ yup.addMethod(yup.string, "esip", function (errorMessage) {
 
 export const ModalIp = ({
   open,
+
   onClose,
   onSubmit,
   onEdit,
@@ -39,6 +41,13 @@ export const ModalIp = ({
   inicial,
   tableData,
   titulomod,
+  setPagination,
+  setGlobalFilter,
+  disabledGuardar,
+  setDisabledGuardar,
+  openDialog,
+  setOpenDialog,
+ redData
 }) => {
   const [errorPrueba, setErrorPrueba] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -64,18 +73,10 @@ export const ModalIp = ({
     validationSchema: checkoutSchema,
     onSubmit: (values) => {
       if (values.id === "new") {
-        // if (!noExisteIp(values.ip)) {
-        //   setErrorPrueba(true);
-        //   setErrorText("Nueva IP ya existe!");
-        //   return;
-        // }
+
         onSubmit(values);
       } else {
-        // if (valuesIpInicial !== values.ip && !noExisteIp(values.ip)) {
-        //   setErrorPrueba(true);
-        //   setErrorText("IP ya existe!");
-        //   return;
-        // }
+
         onEdit(values);
       }
       formik.resetForm();
@@ -88,7 +89,11 @@ export const ModalIp = ({
     setValuesLugar(vNombre);
     formik.setFieldValue("lugar", vNombre);
   };
-
+   
+  const buscarIp=()=>{
+    //setCreateModalOpen(false);
+    setOpenDialog(true)
+  };
   useEffect(() => {
     console.log("los datos ",tableData);
     if (!inicial) return;
@@ -213,6 +218,13 @@ export const ModalIp = ({
           </Grid>
 
           <DialogActions sx={{ pt: 3 }}>
+            <Button
+              //variant="outlined"
+               onClick={buscarIp}
+               color="error"
+              >
+              Buscar Ip
+            </Button>
             <Button color="secondary" onClick={onClose}>
               Cancel
             </Button>
@@ -222,7 +234,27 @@ export const ModalIp = ({
           </DialogActions>
         </form>
       </DialogContent>
+
+      <DialogRedIp 
+      
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+         redData={redData}
+          tableData={tableData}
+          onConfirm={(ip) => {
+        
+            console.log("esta es la funcion pasada para ip aceptada desde MODALIP");
+            formik.values.ip= ip;
+
+       
+          }}
+          setPagination={setPagination}
+          setGlobalFilter={setGlobalFilter}
+          disabledGuardar={disabledGuardar}
+          setDisabledGuardar={setDisabledGuardar}
+      />
     </Dialog>
+    
   );
 };
 
